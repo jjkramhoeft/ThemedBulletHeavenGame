@@ -26,6 +26,9 @@ The running game is also available as `window.game` in the browser console.
 
 ## Theme assets
 
+See [docs/assets.md](docs/assets.md) for where each kind of asset comes from and the size rules for replacing placeholders.
+
+
 `npm run assets:plague` rebuilds Plague Village. Its characters are assembled from the [Universal LPC Spritesheet Generator](https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator) at a pinned commit. On first use the script clones the generator (blobless and sparse) into `.cache/ulpc` and then fetches only the sprite folders the recipes use; set `ULPC_DIR` to use a different checkout. The script also writes `CREDITS.csv` next to the Theme. That file lists every LPC author and licence the art depends on, and it must ship with the game. The Theme's `theme.json` points to it (`credits`), and the in-game Credits screen (C / gamepad Y in the menu) shows its authors, licences and source links. The effects, pickups, tileset and audio are drawn and synthesised by the script as placeholders.
 
 ### Debug Theme
