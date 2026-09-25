@@ -14,7 +14,8 @@
     "assets:plague": "node scripts/make-plague-theme.mjs",
     "assets:kabukicho": "node scripts/make-kabukicho-theme.mjs",
     "assets:buccaneer": "node scripts/make-buccaneer-theme.mjs",
-    "assets:gulch": "node scripts/make-gulch-theme.mjs"
+    "assets:gulch": "node scripts/make-gulch-theme.mjs",
+    "assets:suburban": "node scripts/make-suburban-theme.mjs"
   },
   "dependencies": {
     "phaser": "^4.2.1"

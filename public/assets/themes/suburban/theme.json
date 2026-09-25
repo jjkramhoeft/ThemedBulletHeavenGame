@@ -1,0 +1,20 @@
+{
+  "id": "suburban",
+  "name": "Suburban Outbreak",
+  "pack": "assets/themes/suburban/pack.json",
+  "credits": "assets/themes/suburban/CREDITS.csv",
+  "characters": [
+    { "character": "aura-start", "name": "Paramedic" },
+    { "character": "sweep-start", "name": "Hardware-store Clerk" }
+  ],
+  "names": {
+    "sweep": "Shovel", "shot": "Nail Gun", "orbit": "Lawn-mower Blades", "aura": "Bug-spray Fogger",
+    "chain": "Jumper Cables", "pulse": "Car Alarm Subwoofer", "lure": "Boombox",
+    "swarmer": "Shamblers", "splitter": "Bloater", "fragment": "Crawlers",
+    "tank": "Riot-gear Zombie", "ranged": "Spitter", "boss": "The Mutated Mayor",
+    "xp": "Supply Token", "heal": "Medkit", "magnet": "Fridge Magnet", "chest": "Supply Drop"
+  },
+  "walk": { "frames": 9, "frameRate": 10, "loopFrom": 1 },
+  "decorations": 6,
+  "actorScale": { "boss": 2, "tank": 1.5 }
+}

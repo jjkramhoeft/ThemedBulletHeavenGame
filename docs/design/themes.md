@@ -216,12 +216,12 @@ These notes come from a check of the generator repo at commit `4963a69` (2026-09
     - face bandana: the visible face below the eyes, recoloured with a dotted print;
     - sheriff star: a tin star on the Undead Sheriff's chest;
     - rifle and revolver: the rifle is slung on the back, drawn by the shared `slingLongGun` in `scripts/lib/props.mjs` (Buccaneer Bay's muskets use it too), and the revolver sits in a hip holster.
-  - **Suburban Outbreak:**
-    - Bloater body;
-    - crawl animation for Crawlers;
-    - modern riot gear;
-    - paramedic markings;
-    - mutation parts for the Mayor.
+  - **Suburban Outbreak:** Built: `scripts/make-suburban-theme.mjs`.
+    - Bloater body: a zombie stretched sideways into a 96 px frame, most at the belly, with pustules;
+    - crawl animation for Crawlers: from the side the walk frame is rotated a quarter turn to lie flat; facing down or up only the upper body shows, sunk to the ground;
+    - modern riot gear: a drawn helmet, smoked visor and clear shield;
+    - paramedic markings: reflective bands recoloured onto the uniform and a Star of Life on the chest;
+    - mutation parts for the Mayor: fleshy growths with eyes on one shoulder, plus LPC's exposed-brain wound.
 - **Licensing:**
   - Most assets are CC-BY-SA or GPL, which means crediting every author and releasing modified art under the same licence. The generator exports a credits file.
   - For a DRM-protected store release (Steam, iOS), restrict the build to CC0 / OGA-BY assets. That looks feasible for Plague Village, Buccaneer Bay and Suburban Outbreak, and mostly feasible for Dead Man's Gulch. It is weak for Kabukicho, because the suits, neckties and sunglasses are CC-BY-SA only.
