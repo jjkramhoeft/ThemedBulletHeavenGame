@@ -36,6 +36,8 @@ export function parseManifest(raw: unknown): ThemeManifest {
   if (!m!.names) fail('missing names');
   for (const slot of NAMED_SLOTS) if (typeof m!.names![slot] !== 'string') fail(`missing name for ${slot}`);
   if (!m!.walk || !(m!.walk.frames > 0) || !(m!.walk.frameRate > 0)) fail('walk needs frames and frameRate');
+  const loopFrom = m!.walk!.loopFrom ?? 0;
+  if (loopFrom < 0 || loopFrom >= m!.walk!.frames) fail('walk.loopFrom must be a frame index');
   if (typeof m!.decorations !== 'number') fail('missing decorations');
   return m as ThemeManifest;
 }

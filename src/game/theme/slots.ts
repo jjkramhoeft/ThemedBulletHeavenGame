@@ -45,8 +45,11 @@ export const NAMED_SLOTS = [...WEAPON_ARCHETYPES, ...ENEMY_ARCHETYPES, ...PICKUP
 export type NamedSlot = (typeof NAMED_SLOTS)[number];
 
 export interface WalkSpec {
+  /** Frames per direction; frame 0 is also the standing pose */
   frames: number;
   frameRate: number;
+  /** First frame of the walking loop (LPC: 1, because frame 0 is the standing pose). Default 0. */
+  loopFrom?: number;
 }
 
 /** Every atlas frame a Theme needs, given its Characters, walk spec and decoration count. */

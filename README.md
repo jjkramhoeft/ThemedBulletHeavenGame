@@ -24,9 +24,13 @@ The Debug Theme only appears in dev builds. To include it in a production build,
 
 The running game is also available as `window.game` in the browser console.
 
-## Debug Theme assets
+## Theme assets
 
-`npm run assets:debug` regenerates the Debug Theme's programmer art, SFX, music and Cutscene soundtracks in `public/assets/themes/debug/`. If `ffmpeg` is on `PATH`, it also writes placeholder Cutscene clips (`cut/*.mp4`). Without ffmpeg, a Cutscene falls back to showing its caption over the soundtrack.
+`npm run assets:plague` rebuilds Plague Village. Its characters are assembled from the [Universal LPC Spritesheet Generator](https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator) at a pinned commit. On first use the script clones the generator (blobless and sparse) into `.cache/ulpc` and then fetches only the sprite folders the recipes use; set `ULPC_DIR` to use a different checkout. The script also writes `CREDITS.csv` next to the Theme. That file lists every LPC author and licence the art depends on, and it must ship with the game. The effects, pickups, tileset and audio are drawn and synthesised by the script as placeholders.
+
+### Debug Theme
+
+`npm run assets:debug` regenerates the Debug Theme's programmer art, SFX, music and Cutscene soundtracks in `public/assets/themes/debug/`. Both generators also write placeholder Cutscene clips (`cut/*.mp4`) when `ffmpeg` is on `PATH`. Without ffmpeg, a Cutscene falls back to showing its caption over the soundtrack, but the completeness test fails for Themes that aren't dev-only, because they must ship their clips.
 
 ## Adding a Theme
 

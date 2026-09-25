@@ -38,7 +38,7 @@ export async function loadTheme(scene: Phaser.Scene, manifest: ThemeManifest, on
       const key = ctx.walkAnim(actor, dir);
       scene.anims.create({
         key,
-        frames: scene.anims.generateFrameNames(ctx.sprites, { prefix: `${actor}/walk_${dir}_`, start: 0, end: manifest.walk.frames - 1 }),
+        frames: scene.anims.generateFrameNames(ctx.sprites, { prefix: `${actor}/walk_${dir}_`, start: manifest.walk.loopFrom ?? 0, end: manifest.walk.frames - 1 }),
         frameRate: manifest.walk.frameRate,
         repeat: -1,
       });

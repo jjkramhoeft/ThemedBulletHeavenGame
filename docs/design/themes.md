@@ -200,7 +200,7 @@ These notes come from a check of the generator repo at commit `4963a69` (2026-09
   - Hit feedback uses a flash or tint, not directional hurt frames.
 - **Mapping to archetypes:** `sweep` → slash animation, `shot` → shoot (or thrust with a gun sprite), `aura` / `pulse` / `chain` → spellcast, damage → hurt plus a flash. The weapon effects themselves are separate sprites.
 - **Custom character parts each theme needs:**
-  - **Plague Village:** Plague Doctor beak mask.
+  - **Plague Village:** Plague Doctor beak mask. Built: `scripts/make-plague-theme.mjs` draws the beak onto every frame, positioned from the LPC mask layer. The Flagellant Procession is composed from three Lone Flagellant sprites in one 96 px frame.
   - **Buccaneer Bay:** musket and cannon props.
   - **Kabukicho:**
     - bottle projectile;

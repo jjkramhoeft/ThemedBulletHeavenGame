@@ -1,0 +1,19 @@
+{
+  "id": "plague",
+  "name": "Plague Village",
+  "pack": "assets/themes/plague/pack.json",
+  "characters": [
+    { "character": "aura-start", "name": "Plague Doctor" },
+    { "character": "sweep-start", "name": "Village Blacksmith" }
+  ],
+  "names": {
+    "sweep": "Forge Hammer", "shot": "Crossbow", "orbit": "Whirling Sickles", "aura": "Incense Censer",
+    "chain": "Alchemist's Spark", "pulse": "Church Bell Toll", "lure": "Loaf of Bread",
+    "swarmer": "Plague-maddened Peasants", "splitter": "Flagellant Procession", "fragment": "Lone Flagellants",
+    "tank": "Inquisitor Knight", "ranged": "Crossbow Mercenary", "boss": "The Plague King",
+    "xp": "Silver Penny", "heal": "Healing Herbs", "magnet": "Holy Relic", "chest": "Tithe Chest"
+  },
+  "walk": { "frames": 9, "frameRate": 10, "loopFrom": 1 },
+  "decorations": 5,
+  "actorScale": { "boss": 2, "tank": 1.5 }
+}

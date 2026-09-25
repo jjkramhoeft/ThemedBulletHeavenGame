@@ -1,11 +1,12 @@
 // Generates the Debug Theme's programmer art, audio and (if ffmpeg is on PATH) placeholder Cutscenes.
 // Usage: npm run assets:debug
 // The frame and marker names must match src/game/theme/slots.ts; completeness.test.ts checks the result.
-import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deflateSync } from 'node:zlib';
+import { audioSprite, concat, mix, silence, tone, wav } from './lib/audio.mjs';
+import { iconCard, writePlaceholderClips } from './lib/cutscenes.mjs';
+import { Canvas, hex, packAtlas, writePng } from './lib/raster.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'public/assets/themes/debug');
@@ -16,78 +17,6 @@ const DIRS = ['up', 'left', 'down', 'right'];
 const DIR_ANGLE = { up: -Math.PI / 2, left: Math.PI, down: Math.PI / 2, right: 0 };
 const WALK_FRAMES = 4;
 const DECORATIONS = 5;
-
-// ---------------------------------------------------------------- raster helpers
-
-const hex = (h, a = 255) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16), a];
-
-class Canvas {
-  constructor(w, h) { this.w = w; this.h = h; this.px = new Uint8Array(w * h * 4); }
-  blend(x, y, [r, g, b, a]) {
-    x = Math.floor(x); y = Math.floor(y);
-    if (x < 0 || y < 0 || x >= this.w || y >= this.h || a <= 0) return;
-    const i = (y * this.w + x) * 4, p = this.px, sa = a / 255, da = p[i + 3] / 255, oa = sa + da * (1 - sa);
-    if (oa <= 0) return;
-    p[i] = (r * sa + p[i] * da * (1 - sa)) / oa;
-    p[i + 1] = (g * sa + p[i + 1] * da * (1 - sa)) / oa;
-    p[i + 2] = (b * sa + p[i + 2] * da * (1 - sa)) / oa;
-    p[i + 3] = oa * 255;
-  }
-  /** Fills every pixel whose centre satisfies `inside(x, y)` within the bounding box. */
-  shape(x0, y0, x1, y1, col, inside) {
-    for (let y = Math.floor(y0); y <= Math.ceil(y1); y++)
-      for (let x = Math.floor(x0); x <= Math.ceil(x1); x++) if (inside(x + 0.5, y + 0.5)) this.blend(x, y, col);
-  }
-  rect(x, y, w, h, col) { this.shape(x, y, x + w - 1, y + h - 1, col, (px, py) => px >= x && px < x + w && py >= y && py < y + h); }
-  circle(cx, cy, r, col) { this.shape(cx - r, cy - r, cx + r, cy + r, col, (x, y) => (x - cx) ** 2 + (y - cy) ** 2 <= r * r); }
-  ring(cx, cy, r0, r1, col) {
-    this.shape(cx - r1, cy - r1, cx + r1, cy + r1, col, (x, y) => { const d = Math.hypot(x - cx, y - cy); return d >= r0 && d <= r1; });
-  }
-  sector(cx, cy, r0, r1, a0, a1, col) {
-    this.shape(cx - r1, cy - r1, cx + r1, cy + r1, col, (x, y) => {
-      const d = Math.hypot(x - cx, y - cy), a = Math.atan2(y - cy, x - cx);
-      return d >= r0 && d <= r1 && a >= a0 && a <= a1;
-    });
-  }
-  poly(pts, col) {
-    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
-    this.shape(Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys), col, (x, y) => {
-      let inside = false;
-      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-        const [xi, yi] = pts[i], [xj, yj] = pts[j];
-        if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
-      }
-      return inside;
-    });
-  }
-  line(x0, y0, x1, y1, width, col) {
-    const r = width / 2, dx = x1 - x0, dy = y1 - y0, len2 = dx * dx + dy * dy || 1;
-    this.shape(Math.min(x0, x1) - r, Math.min(y0, y1) - r, Math.max(x0, x1) + r, Math.max(y0, y1) + r, col, (x, y) => {
-      const t = Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / len2));
-      return Math.hypot(x - (x0 + t * dx), y - (y0 + t * dy)) <= r;
-    });
-  }
-  /** Copies another canvas in at (ox, oy). */
-  draw(src, ox, oy) {
-    for (let y = 0; y < src.h; y++) this.px.set(src.px.subarray(y * src.w * 4, (y + 1) * src.w * 4), ((oy + y) * this.w + ox) * 4);
-  }
-}
-
-const CRC_TABLE = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
-function crc32(buf) { let c = 0xffffffff; for (const b of buf) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
-function chunk(type, data) {
-  const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
-  const td = Buffer.concat([Buffer.from(type, 'ascii'), data]);
-  const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(td));
-  return Buffer.concat([len, td, crc]);
-}
-function png(c) {
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(c.w, 0); ihdr.writeUInt32BE(c.h, 4); ihdr[8] = 8; ihdr[9] = 6;
-  const raw = Buffer.alloc((c.w * 4 + 1) * c.h);
-  for (let y = 0; y < c.h; y++) Buffer.from(c.px.buffer, y * c.w * 4, c.w * 4).copy(raw, y * (c.w * 4 + 1) + 1);
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
-}
 
 // ---------------------------------------------------------------- sprites
 
@@ -154,22 +83,8 @@ const DECO = [
 ];
 for (let i = 0; i < DECORATIONS; i++) frame(`deco/${i}`, 32, 32, DECO[i]);
 
-// Shelf-pack into a power-of-two atlas with 2 px spacing.
-const PAD = 2, ATLAS_W = 1024;
-frames.sort((a, b) => b.c.h - a.c.h || b.c.w - a.c.w);
-let x = PAD, y = PAD, rowH = 0;
-for (const f of frames) {
-  if (x + f.c.w + PAD > ATLAS_W) { x = PAD; y += rowH + PAD; rowH = 0; }
-  f.x = x; f.y = y; x += f.c.w + PAD; rowH = Math.max(rowH, f.c.h);
-}
-let atlasH = 64; while (atlasH < y + rowH + PAD) atlasH *= 2;
-const atlas = new Canvas(ATLAS_W, atlasH);
-const json = { frames: {}, meta: { app: 'make-debug-theme', image: 'sprites.png', size: { w: ATLAS_W, h: atlasH }, scale: '1' } };
-for (const f of frames) {
-  atlas.draw(f.c, f.x, f.y);
-  json.frames[f.name] = { frame: { x: f.x, y: f.y, w: f.c.w, h: f.c.h }, rotated: false, trimmed: false, spriteSourceSize: { x: 0, y: 0, w: f.c.w, h: f.c.h }, sourceSize: { w: f.c.w, h: f.c.h } };
-}
-writeFileSync(join(OUT, 'sprites.png'), png(atlas));
+const { atlas, json } = packAtlas(frames, 'sprites.png');
+writePng(join(OUT, 'sprites.png'), atlas);
 writeFileSync(join(OUT, 'sprites.json'), JSON.stringify(json, null, 1) + '\n');
 
 // Seamless ground tile: flat colour, soft noise, grid lines on the tile edges.
@@ -177,39 +92,11 @@ const ground = new Canvas(256, 256);
 let seed = 7; const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
 for (let gy = 0; gy < 256; gy++) for (let gx = 0; gx < 256; gx++) { const n = rnd() * 10; ground.blend(gx, gy, [38 + n, 46 + n, 40 + n, 255]); }
 for (let i = 0; i < 256; i++) { ground.blend(i, 0, [60, 72, 62, 255]); ground.blend(0, i, [60, 72, 62, 255]); ground.blend(i, 128, [50, 60, 52, 255]); ground.blend(128, i, [50, 60, 52, 255]); }
-writeFileSync(join(OUT, 'ground.png'), png(ground));
+writePng(join(OUT, 'ground.png'), ground);
 
 // ---------------------------------------------------------------- audio
 
-const RATE = 22050;
-function wav(samples) {
-  const data = Buffer.alloc(samples.length * 2);
-  samples.forEach((s, i) => data.writeInt16LE(Math.round(Math.max(-1, Math.min(1, s)) * 32767), i * 2));
-  const h = Buffer.alloc(44);
-  h.write('RIFF', 0); h.writeUInt32LE(36 + data.length, 4); h.write('WAVE', 8); h.write('fmt ', 12);
-  h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(1, 22); h.writeUInt32LE(RATE, 24);
-  h.writeUInt32LE(RATE * 2, 28); h.writeUInt16LE(2, 32); h.writeUInt16LE(16, 34); h.write('data', 36); h.writeUInt32LE(data.length, 40);
-  return Buffer.concat([h, data]);
-}
-const WAVES = {
-  sine: (p) => Math.sin(p * 2 * Math.PI),
-  square: (p) => (p % 1 < 0.5 ? 1 : -1),
-  saw: (p) => 2 * (p % 1) - 1,
-  noise: () => Math.random() * 2 - 1,
-};
-/** A single note gliding from f0 to f1 with a linear decay envelope. */
-function tone(f0, f1, dur, wave = 'square', vol = 0.3) {
-  const n = Math.floor(dur * RATE), out = new Float32Array(n); let phase = 0;
-  for (let i = 0; i < n; i++) {
-    const t = i / n; phase += (f0 + (f1 - f0) * t) / RATE;
-    out[i] = WAVES[wave](phase) * vol * Math.min(1, i / 60) * (1 - t);
-  }
-  return out;
-}
-const concat = (...parts) => { const out = new Float32Array(parts.reduce((s, p) => s + p.length, 0)); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out; };
-const silence = (dur) => new Float32Array(Math.floor(dur * RATE));
 const arp = (notes, step, wave = 'square', vol = 0.25) => concat(...notes.map((f) => tone(f, f, step, wave, vol)));
-const mix = (a, b) => { const out = new Float32Array(Math.max(a.length, b.length)); for (let i = 0; i < out.length; i++) out[i] = (a[i] ?? 0) + (b[i] ?? 0); return out; };
 
 const SFX = {
   hit: tone(300, 120, 0.06, 'noise', 0.25),
@@ -228,12 +115,8 @@ const SFX = {
   fire_pulse: tone(140, 50, 0.3, 'sine', 0.45),
   fire_lure: tone(300, 600, 0.15, 'sine', 0.25),
 };
-const spritemap = {}; const parts = []; let cursor = 0;
-for (const [name, s] of Object.entries(SFX)) {
-  spritemap[name] = { start: +(cursor / RATE).toFixed(4), end: +((cursor + s.length) / RATE).toFixed(4), loop: false };
-  parts.push(s, silence(0.05)); cursor += s.length + Math.floor(0.05 * RATE);
-}
-writeFileSync(join(OUT, 'sfx.wav'), wav(concat(...parts)));
+const { samples, spritemap } = audioSprite(SFX);
+writeFileSync(join(OUT, 'sfx.wav'), wav(samples));
 writeFileSync(join(OUT, 'sfx.json'), JSON.stringify({ resources: ['sfx.wav'], spritemap }, null, 2) + '\n');
 
 const bars = (roots, step, wave, vol) => concat(...roots.map((r) => arp([r, r * 1.25, r * 1.5, r * 2], step, wave, vol)));
@@ -249,22 +132,12 @@ WEAPONS.forEach((w, i) => {
 
 // ---------------------------------------------------------------- placeholder Cutscenes (optional)
 
-const hasFfmpeg = spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status === 0;
-if (hasFfmpeg) {
-  for (const w of WEAPONS) {
-    const out = join(OUT, `cut/${w}.mp4`);
-    const common = ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i'];
-    const enc = ['-t', String(CUT_SECONDS), '-r', '30', '-c:v', 'libx264', '-profile:v', 'main', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', out];
-    const label = `drawtext=text='${w.toUpperCase()} LEVEL UP':fontsize=96:fontcolor=white:x=(w-tw)/2:y=(h-th)/2`;
-    try {
-      execFileSync('ffmpeg', [...common, `color=c=0x22324a:s=1280x720:d=${CUT_SECONDS}`, '-vf', label, ...enc]);
-    } catch {
-      execFileSync('ffmpeg', [...common, `testsrc2=s=1280x720:d=${CUT_SECONDS}`, ...enc]); // no fontconfig: plain test pattern
-    }
-  }
-  console.log('Cutscenes: wrote cut/*.mp4');
-} else {
-  console.warn('Cutscenes: ffmpeg not found on PATH, skipped cut/*.mp4 (the game skips missing Cutscenes).');
-}
+const CACHE = join(ROOT, '.cache');
+mkdirSync(CACHE, { recursive: true });
+const cards = WEAPONS.map((w) => ({
+  weapon: w,
+  png: iconCard(frames.find((f) => f.name === `${w}/icon`).c, join(CACHE, `debug-card-${w}.png`), (card) => card.rect(0, 0, 1280, 720, hex('#22324a'))),
+}));
+writePlaceholderClips(join(OUT, 'cut'), cards, CUT_SECONDS);
 
-console.log(`Debug Theme: ${frames.length} frames in ${ATLAS_W}x${atlasH} atlas, ${Object.keys(SFX).length} SFX markers.`);
+console.log(`Debug Theme: ${frames.length} frames in ${json.meta.size.w}x${json.meta.size.h} atlas, ${Object.keys(SFX).length} SFX markers.`);

@@ -18,6 +18,9 @@ const MAX_MS = 20_000;
 export class Cutscene extends Phaser.Scene {
   private controls!: Controls;
   private finished = false;
+  private video: Phaser.GameObjects.Video | null = null;
+  private track: Phaser.Sound.BaseSound | null = null;
+  private started = false;
 
   constructor() {
     super('Cutscene');
@@ -28,6 +31,8 @@ export class Cutscene extends Phaser.Scene {
     const { width: w, height: h } = this.scale;
     const keys = theme.cutscene(data.weapon);
     this.finished = false;
+    this.started = false;
+    this.video = null;
     this.controls = new Controls(this);
 
     this.add.rectangle(0, 0, w, h, 0x000000).setOrigin(0).setInteractive().on('pointerdown', () => this.finish());
@@ -36,28 +41,30 @@ export class Cutscene extends Phaser.Scene {
 
     const music = this.sound.get(theme.musicGame);
     music?.pause();
-    const track = this.cache.audio.exists(keys.audio) ? this.sound.add(keys.audio, { volume: getPrefs(this).musicVol }) : null;
+    const track = (this.track = this.cache.audio.exists(keys.audio) ? this.sound.add(keys.audio, { volume: getPrefs(this).musicVol }) : null);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { track?.destroy(); music?.resume(); });
 
     if (!this.cache.video.exists(keys.video)) return this.soundOnly(track, caption);
 
-    const video = this.add.video(w / 2, h / 2, keys.video).setDepth(1);
-    let started = false;
-    video.once(Phaser.GameObjects.Events.VIDEO_PLAYING, () => {
-      started = true;
-      const scale = Math.min(w / video.width, h / video.height);
-      video.setScale(scale);
-      track?.play();
-    });
+    // Start detection is polled in update(): for a muted clip the browser fires `playing` before Phaser
+    // attaches its listeners (after the play() promise resolves), so VIDEO_PLAYING never arrives.
+    const video = (this.video = this.add.video(w / 2, h / 2, keys.video).setDepth(1).setVisible(false));
     video.once(Phaser.GameObjects.Events.VIDEO_COMPLETE, () => this.finish());
     video.once(Phaser.GameObjects.Events.VIDEO_ERROR, () => this.soundOnly(track, caption));
     video.once(Phaser.GameObjects.Events.VIDEO_UNSUPPORTED, () => this.soundOnly(track, caption));
-    this.time.delayedCall(START_TIMEOUT_MS, () => { if (!started) this.soundOnly(track, caption); });
+    this.time.delayedCall(START_TIMEOUT_MS, () => { if (!this.started) this.soundOnly(track, caption); });
     this.time.delayedCall(MAX_MS, () => this.finish());
     video.play(false);
   }
 
   update(): void {
+    const v = this.video;
+    if (v && !this.started && !this.finished && v.isPlaying() && v.getCurrentTime() > 0 && v.width > 0) {
+      this.started = true;
+      // The size was 0 when the Video was created, so recompute the origin now that it is known.
+      v.setOrigin(0.5).setScale(Math.min(this.scale.width / v.width, this.scale.height / v.height)).setVisible(true);
+      this.track?.play();
+    }
     this.controls.update();
     if (this.controls.confirmPressed || this.controls.backPressed) this.finish();
   }
