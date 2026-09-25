@@ -414,96 +414,34 @@ Open questions (need device testing, no authoritative answer found):
 
 ## Proposed architecture sketch
 
+**As built (M1).** This sketch is now implemented; the code is authoritative. It differs from the original sketch in three ways:
+- Each Theme keeps its own `theme.json` (the manifest) and `pack.json` (one section named after the Theme) in its folder, and `themes/index.json` only lists Theme ids. This replaces the shared `packs.json` and the list of manifests in `index.json`, so adding a Theme never edits another Theme's files.
+- Walk animations are not listed in the manifest. `theme/slots.ts` fixes the frame names (`<actor>/walk_<dir>_<n>`, with `up`, `left`, `down`, `right`), and the manifest only gives `walk.frames` and `walk.frameRate`. `theme/completeness.test.ts` checks every Theme's pack, atlas and SFX markers against `slots.ts`.
+- The `Preloader` scene is called `Loading`. It runs after the menu, when the Theme is known, and unloads any other Theme first.
+
 ### Folder layout
 ```
 ThemedBulletHeavenGame/
-├─ index.html
-├─ vite/ config.dev.mjs, config.prod.mjs          # from template-vite-ts
-├─ public/
-│  └─ assets/
-│     ├─ common/ ui.png, ui.json, fonts/…          # theme-independent UI atlas
-│     └─ themes/
-│        ├─ index.json                              # list of ThemeManifest entries
-│        ├─ packs.json                              # Asset Pack, one section per theme
-│        ├─ debug/   (same file names; programmer art, ffmpeg title-card clips; dev builds only)
-│        ├─ plague/  sprites.png|json, ground.png, sfx.json|ogg|m4a, music-*.ogg|m4a,
-│        │           cut/<weapon>.mp4|webm + cut/<weapon>.ogg|m4a
-│        ├─ western/ (same file names)
-│        ├─ pirate/  (same file names)
-│        ├─ zombie/  (same file names)
-│        └─ kabuki/  (same file names)
-├─ src/
-│  ├─ main.ts
-│  └─ game/
-│     ├─ main.ts                                    # Phaser.Game config (AUTO, arcade, scenes)
-│     ├─ rules/       archetypes.ts, characters.ts, passives.ts, weapons.ts, levelUp.ts,
-│     │               chest.ts, damage.ts, waveScript.ts, boss.ts, saveMigrations.ts
-│     │               # no Phaser or theme/ imports; *.test.ts beside each (Vitest), ADR 0002
-│     ├─ theme/       ThemeManifest.ts, ThemeContext.ts, loadTheme.ts, unloadTheme.ts
-│     ├─ systems/     Spawner.ts, WeaponSystem.ts, CollisionSystem.ts, XpSystem.ts, SpatialHash.ts
-│     ├─ entities/    Enemy.ts, Projectile.ts, Pickup.ts                         # pooled classes
-│     ├─ save/        SaveStore.ts, Prefs.ts                                     # localStorage I/O only
-│     └─ scenes/      Boot.ts, Preloader.ts, MainMenu.ts, Game.ts, HUD.ts,
-│                     LevelUp.ts, ChestReveal.ts, Cutscene.ts, GameOver.ts
-└─ docs/research/phaser-multi-theme-bullet-heaven.md
-```
-
-### Theme manifest (`public/assets/themes/index.json`, one entry shown)
-```json
-{
-  "version": 1,
-  "themes": [
-    {
-      "id": "plague",
-      "packUrl": "assets/themes/packs.json",
-      "packSection": "plague",
-      "anims": {
-        "player.walk":   { "frames": "player/walk_",   "end": 7, "frameRate": 12, "repeat": -1 },
-        "swarmer.walk":  { "frames": "swarmer/walk_",  "end": 5, "frameRate": 14, "repeat": -1 },
-        "splitter.walk": { "frames": "splitter/walk_", "end": 3, "frameRate": 10, "repeat": -1 },
-        "tank.walk":     { "frames": "tank/walk_",     "end": 5, "frameRate": 8,  "repeat": -1 },
-        "shot.proj":     { "frames": "shot/proj_",     "end": 3, "frameRate": 20, "repeat": -1 }
-      },
-      "characters": [
-        { "character": "aura-start", "name": "Plague Doctor" },
-        { "character": "sweep-start", "name": "Village Blacksmith" }
-      ]
-    }
-  ]
-}
-```
-
-### Asset Pack (`public/assets/themes/packs.json`, one section shown)
-```json
-{
-  "plague": {
-    "prefix": "plague.",
-    "path": "assets/themes/plague/",
-    "files": [
-      { "type": "atlas", "key": "sprites", "textureURL": "sprites.png", "atlasURL": "sprites.json" },
-      { "type": "audioSprite", "key": "sfx", "jsonURL": "sfx.json", "audioURL": ["sfx.ogg", "sfx.m4a"] },
-      { "type": "image", "key": "ground", "url": "ground.png" },
-      { "type": "audio", "key": "music.game", "url": ["music-game.ogg", "music-game.m4a"] },
-      { "type": "video", "key": "cut.shot", "noAudio": true,
-        "url": [ { "url": "cut/shot.webm", "type": "vp9" }, { "url": "cut/shot.mp4", "type": "mp4" } ] },
-      { "type": "audio", "key": "cut.shot.audio", "url": ["cut/shot.ogg", "cut/shot.m4a"] }
-    ]
-  }
-}
-```
-There is one `cut.<weapon>` video and one `cut.<weapon>.audio` entry for each of the 7 weapons. This yields the keys `plague.sprites`, `plague.sfx`, `plague.music.game`, `plague.cut.shot`, `plague.cut.shot.audio`, and so on. Other themes use identical logical keys under their own prefix. Video entries only register URLs (no download), per §4.1.
-
-### Game config essentials
-```ts
-new Phaser.Game({
-  type: Phaser.AUTO,                                  // WebGL, Canvas fallback (deprecated)
-  parent: 'game-container', width: 1280, height: 720,
-  pixelArt: true,                                     // LPC art at 1:1; camera zoom tuned in one place
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false } },
-  render: { /* autoMobileTextures: true (default), batchSize: 16384 (default) */ },
-  scene: [Boot, Preloader, MainMenu, Game, HUD, LevelUp, ChestReveal, Cutscene, GameOver],
-});
+├─ public/assets/themes/
+│  ├─ index.json                 # { "version": 1, "themes": ["debug", ...] }
+│  └─ <id>/
+│     ├─ theme.json              # ThemeManifest: names, Characters offered, walk spec, decorations, actor scale
+│     ├─ pack.json               # Asset Pack, section "<id>", prefix "<id>."
+│     ├─ sprites.png|json        # one gameplay atlas (frame names from theme/slots.ts)
+│     ├─ ground.png              # Tileset ground
+│     ├─ sfx.json + audio        # audio sprite, markers from theme/slots.ts
+│     ├─ music-menu.*, music-game.*
+│     └─ cut/<weapon>.mp4 + cut/<weapon>.<audio>   # muted clip + soundtrack (ADR 0001)
+├─ scripts/make-debug-theme.mjs  # generates the Debug Theme (npm run assets:debug)
+└─ src/game/
+   ├─ rules/     # Phaser-free, unit-tested (ADR 0002): archetypes, characters, passives, weapons,
+   │             # loadout (Level-up/Chest cards), progression, waveScript, boss, run, save, rng
+   ├─ theme/     # slots (the Skin contract), ThemeManifest, ThemeContext, themeLoader (load/unload)
+   ├─ systems/   # WeaponSystem (7 behaviours), PickupField (no physics bodies), Decorations
+   ├─ entities/  # Enemy, Projectile (pooled Arcade objects)
+   ├─ input/     # Controls: keyboard + gamepad, latched key presses
+   ├─ save/      # SaveStore: localStorage I/O only
+   └─ scenes/    # Boot, MainMenu, Loading, Game, HUD, LevelUp, ChestReveal, Cutscene, GameOver
 ```
 
 ---

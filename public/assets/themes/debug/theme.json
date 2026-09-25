@@ -1,0 +1,20 @@
+{
+  "id": "debug",
+  "name": "Debug Theme",
+  "devOnly": true,
+  "pack": "assets/themes/debug/pack.json",
+  "characters": [
+    { "character": "shot-start", "name": "Blue Shooter" },
+    { "character": "sweep-start", "name": "Green Swinger" }
+  ],
+  "names": {
+    "sweep": "Sweep", "shot": "Shot", "orbit": "Orbit", "aura": "Aura",
+    "chain": "Chain", "pulse": "Pulse", "lure": "Lure",
+    "swarmer": "Swarmer", "splitter": "Splitter", "fragment": "Fragment",
+    "tank": "Tank", "ranged": "Ranged", "boss": "Boss",
+    "xp": "XP Gem", "heal": "Heal", "magnet": "Magnet", "chest": "Chest"
+  },
+  "walk": { "frames": 4, "frameRate": 8 },
+  "decorations": 5,
+  "actorScale": { "boss": 2.2, "tank": 1.3, "fragment": 0.75 }
+}
