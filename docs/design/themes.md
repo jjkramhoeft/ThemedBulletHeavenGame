@@ -201,7 +201,11 @@ These notes come from a check of the generator repo at commit `4963a69` (2026-09
 - **Mapping to archetypes:** `sweep` → slash animation, `shot` → shoot (or thrust with a gun sprite), `aura` / `pulse` / `chain` → spellcast, damage → hurt plus a flash. The weapon effects themselves are separate sprites.
 - **Custom character parts each theme needs:**
   - **Plague Village:** Plague Doctor beak mask. Built: `scripts/make-plague-theme.mjs` draws the beak onto every frame, positioned from the LPC mask layer. The Flagellant Procession is composed from three Lone Flagellant sprites in one 96 px frame.
-  - **Buccaneer Bay:** musket and cannon props.
+  - **Buccaneer Bay:** Built: `scripts/make-buccaneer-theme.mjs`.
+    - muskets: the script draws one slung across the back of the Navy Gunner and the Musketeer on every frame, anchored to the torso;
+    - cannon: the Cannon Broadside is effect and icon art only, so no character prop is needed;
+    - the Ghost Admiral is a skeleton in admiral's dress that the script recolours into a translucent, glowing spectre;
+    - the Brute Quartermaster uses the muscular body, which is CC-BY-SA/GPL only. A DRM store build would need the male body instead.
   - **Kabukicho:** Built: `scripts/make-kabukicho-theme.mjs`.
     - bottle projectile: drawn as custom art (`ranged/proj`);
     - yakuza tattoos: the script recolours the bare arm skin of the Retired Yakuza and the Bottle-throwing Yakuza in an irezumi pattern;

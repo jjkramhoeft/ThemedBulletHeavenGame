@@ -1,0 +1,20 @@
+{
+  "id": "buccaneer",
+  "name": "Buccaneer Bay",
+  "pack": "assets/themes/buccaneer/pack.json",
+  "credits": "assets/themes/buccaneer/CREDITS.csv",
+  "characters": [
+    { "character": "sweep-start", "name": "Privateer Captain" },
+    { "character": "shot-start", "name": "Navy Gunner" }
+  ],
+  "names": {
+    "sweep": "Cutlass", "shot": "Flintlock Pistol", "orbit": "Swinging Anchors", "aura": "Gunpowder Smoke",
+    "chain": "St. Elmo's Fire", "pulse": "Cannon Broadside", "lure": "Barrel of Rum",
+    "swarmer": "Deckhands", "splitter": "Boarding Party", "fragment": "Lone Boarders",
+    "tank": "Brute Quartermaster", "ranged": "Musketeer", "boss": "The Ghost Admiral",
+    "xp": "Doubloon", "heal": "Grog", "magnet": "Compass", "chest": "Treasure Chest"
+  },
+  "walk": { "frames": 9, "frameRate": 10, "loopFrom": 1 },
+  "decorations": 6,
+  "actorScale": { "boss": 2, "tank": 1.5 }
+}

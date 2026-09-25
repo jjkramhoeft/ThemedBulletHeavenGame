@@ -95,7 +95,9 @@ export class Lpc {
       const file = sheetPath(base);
       if (!this.tracked.has(`spritesheets/${file}`)) continue; // e.g. back/front layers only drawn for attack animations
       const material = spec.material ?? def.recolors?.material;
-      const recolor = !variant && spec.color && material ? { material, to: spec.color } : null;
+      // An item may be drawn in a different source colour than its material's default (e.g. black bandanas).
+      const from = material === def.recolors?.material ? def.recolors?.base : undefined;
+      const recolor = !variant && spec.color && material ? { material, from, to: spec.color } : null;
       out.push({ zPos: layer.zPos ?? 0, file, recolor, item: spec.item, credit: sheetPath(template) }); // CREDITS.csv keeps the ${} placeholders
     }
     if (out.length === 0) throw new Error(`LPC: "${spec.item}" has no ${anim} sheet for body type ${bodyType}`);
@@ -111,9 +113,9 @@ export class Lpc {
     }
   }
 
-  recolor(c, { material, to }) {
+  recolor(c, { material, from: fromName, to }) {
     const { base, colors } = this.palette(material);
-    const from = colors[base], target = colors[to];
+    const from = colors[fromName ?? base], target = colors[to];
     if (!from || !target) throw new Error(`LPC: unknown ${material} colour "${to}" (have ${Object.keys(colors).join(', ')})`);
     const parse = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
     const src = from.map(parse), dst = target.map(parse);
