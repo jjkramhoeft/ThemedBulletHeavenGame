@@ -13,7 +13,7 @@ Labels used in this file:
 
 - **Version.** Phaser 4 is current. The latest release is **v4.2.1 (2026-07-09)**. Earlier releases were v4.0.0 (2026-04-10), v4.1.0 (2026-04-30) and v4.2.0 (2026-06-19). The last 3.x release is v3.90.0 (2025-05-23). ([releases](https://github.com/phaserjs/phaser/releases), [v4.2.1](https://github.com/phaserjs/phaser/releases/tag/v4.2.1), [v3.90.0](https://github.com/phaserjs/phaser/releases/tag/v3.90.0)). docs.phaser.io currently documents **v4.1.0**, not 4.2.1. newdocs.phaser.io did not resolve (DNS) when I checked.
 - **Tooling.** Start from the official `phaserjs/template-vite-ts` template (Vite 6 and TypeScript 5.7), then bump `phaser` from the pinned `4.0.0` to `^4.2.1`. Phaser ships its own `.d.ts` types.
-- **Themes.** Keep all mechanics in theme-agnostic data keyed by *role* (`player`, `enemyA..C`, `weaponA..C`). For each theme, load one Asset Pack section. Give each section its own loader **`prefix`** so every theme's keys are namespaced (`lab.sprites`, `steam.sprites`). Use **identical frame names** in every theme's atlas, so switching theme only changes the texture key. To unload, destroy the objects that use the theme first, then remove anims, textures, cache entries and sounds.
+- **Themes.** Keep all mechanics in theme-agnostic data keyed by *role* (`player`, enemy archetypes such as `swarmer` and `tank`, weapon archetypes such as `sweep` and `shot`; see [docs/design/themes.md](../design/themes.md)). For each theme, load one Asset Pack section. Give each section its own loader **`prefix`** so every theme's keys are namespaced (`plague.sprites`, `western.sprites`). Use **identical frame names** in every theme's atlas, so switching theme only changes the texture key. To unload, destroy the objects that use the theme first, then remove anims, textures, cache entries and sounds.
 - **Performance.** Pool with `Group` using `maxSize`, `get()` and, for physics objects, `disableBody(true, true)`. `killAndHide` does not disable the physics body. Use Arcade `overlap` with circle bodies. Arcade's dynamic RTree is fine well below the source's "~5,000 bodies" guidance. Put all gameplay sprites for a theme in one atlas, because by default Phaser uses **1 texture per batch on iOS/Android** (`autoMobileTextures`). Use WebGL. Canvas is deprecated in v4.
 - **Cutscenes.** `this.load.video()` downloads nothing. It only resolves a URL; the `Video` game object fetches the file itself when it loads it. Audible video needs a user gesture (sticky activation on Chrome; a gesture handler is the safe choice on WebKit). The most robust pattern is to start playback **synchronously inside the pointer handler of the upgrade-choice UI**. An alternative is to play the video muted (`noAudio: true`) and play its soundtrack through the already-unlocked Web Audio Sound Manager. Pause the Game scene with `scene.pause('Game')`, which stops physics, timers, tweens, anims and input updates but keeps rendering.
 - **Codecs.** Ship MP4 (H.264 High/Main, AAC-LC, `+faststart`) as the baseline. Optionally add a VP9 WebM *first* in the URL list, gated with `{ type: 'vp9' }`. Serve videos **same-origin**, because `load.video` never sets `crossOrigin`. Also serve them with byte-range support. Keep the resolution modest (720p), since every frame is uploaded to a WebGL texture.
@@ -57,13 +57,17 @@ Principle: gameplay code never mentions a theme. It talks about **roles** and **
 
 ```ts
 // src/game/data/roles.ts  (theme-agnostic)
-export type EnemyRole  = 'enemyA' | 'enemyB' | 'enemyC';
-export type WeaponRole = 'weaponA' | 'weaponB' | 'weaponC';
+// Archetype keys match docs/design/themes.md
+export type EnemyRole  = 'swarmer' | 'splitter' | 'tank' | 'ranged' | 'boss';
+export type WeaponRole = 'sweep' | 'shot' | 'orbit' | 'aura' | 'chain' | 'pulse' | 'lure';
+export type PickupRole = 'xp' | 'heal' | 'magnet' | 'chest';
 
 export const ENEMIES: Record<EnemyRole, { hp: number; speed: number; radius: number; xp: number }> = {
-  enemyA: { hp: 10, speed: 60,  radius: 10, xp: 1 },
-  enemyB: { hp: 30, speed: 40,  radius: 16, xp: 3 },
-  enemyC: { hp: 5,  speed: 110, radius: 8,  xp: 2 },
+  swarmer:  { hp: 5,   speed: 110, radius: 8,  xp: 1 },
+  splitter: { hp: 12,  speed: 60,  radius: 12, xp: 2 },
+  tank:     { hp: 30,  speed: 40,  radius: 16, xp: 3 },
+  ranged:   { hp: 10,  speed: 50,  radius: 10, xp: 2 },
+  boss:     { hp: 500, speed: 35,  radius: 32, xp: 50 },
 };
 export const WEAPONS: Record<WeaponRole, { cooldownMs: number; damage: number; maxLevel: number }> = { /* ... */ };
 ```
@@ -71,7 +75,7 @@ export const WEAPONS: Record<WeaponRole, { cooldownMs: number; damage: number; m
 ```ts
 // src/game/theme/ThemeContext.ts
 export interface ThemeManifest {
-  id: string;                 // 'lab' | 'steam' | 'kabuki' ...
+  id: string;                 // 'plague' | 'western' | 'pirate' | 'zombie' | 'kabuki' ...
   packUrl: string;            // shared pack file
   packSection: string;        // section name inside it (== id)
   anims: Record<string, { frames: string; frameRate: number; repeat: number; end: number }>;
@@ -99,7 +103,7 @@ Relevant Loader facts, all [source]:
 
 Why use a prefix per theme instead of identical keys: identical keys force a full unload before the next theme can load, because duplicate keys are ignored. Prefixed keys let two themes coexist briefly, for example when preloading the next theme during a menu, and they make "which theme owns this asset" explicit, so unloading reduces to filtering by prefix. [inference]
 
-Recommended: **use the same frame names in every theme's atlas** (`player/walk_0001`, `enemyA/walk_0001`, `weaponA/proj_0001`, `weaponA/icon`, and so on). Then role code only swaps the texture key: `this.add.sprite(x, y, theme.key('sprites'), 'enemyA/walk_0001')`. [inference/design]
+Recommended: **use the same frame names in every theme's atlas** (`player/walk_0001`, `swarmer/walk_0001`, `shot/proj_0001`, `shot/icon`, and so on). Then role code only swaps the texture key: `this.add.sprite(x, y, theme.key('sprites'), 'swarmer/walk_0001')`. [inference/design]
 
 ```ts
 // Loading a theme at runtime (e.g. from a ThemeLoader scene)
@@ -181,8 +185,8 @@ All of the following are [source] ([Group.js](https://github.com/phaserjs/phaser
 this.enemies = this.physics.add.group({ classType: Enemy, maxSize: 600, runChildUpdate: false });
 this.shots   = this.physics.add.group({ classType: Projectile, maxSize: 800, allowGravity: false });
 // spawn
-const e = this.enemies.get(x, y, theme.key('sprites'), 'enemyA/walk_0001') as Enemy | null;
-if (e) { e.enableBody(true, x, y, true, true); e.body!.setCircle(ENEMIES.enemyA.radius); e.play(theme.anim('enemyA','walk')); }
+const e = this.enemies.get(x, y, theme.key('sprites'), 'swarmer/walk_0001') as Enemy | null;
+if (e) { e.enableBody(true, x, y, true, true); e.body!.setCircle(ENEMIES.swarmer.radius); e.play(theme.anim('swarmer','walk')); }
 // despawn
 e.disableBody(true, true);
 ```
@@ -211,7 +215,7 @@ All of the following are [source] ([Rendering Concepts](https://github.com/phase
 - Canvas is deprecated in v4 (§1). WebGL is recommended.
 
 Recommendations [inference]:
-- Per theme, put **one gameplay atlas** (player, 3 enemies, 3 weapons' projectiles, pickups, hit FX) at 2048² or smaller, plus a **shared UI atlas**.
+- Per theme, put **one gameplay atlas** (2 players, 5 enemies, 7 weapons' effects, 4 pickups, hit FX) at 2048² or smaller, plus a **shared UI atlas**.
 - Keep gameplay sprites contiguous in the display list, for example in one `Layer`, so that on mobile (1 texture per batch) enemies, projectiles and pickups batch together.
 - Avoid per-sprite filters and lighting on pooled objects.
 - Use `type: Phaser.AUTO` (WebGL with Canvas fallback).
@@ -248,7 +252,7 @@ How Phaser delivers input events, [source], which matters for "play inside the g
 
 Recommended cutscene start pattern [inference]:
 1. Show the upgrade-choice UI (the `LevelUp` scene). The player taps or clicks a choice. In that Phaser `pointerup` handler, **synchronously** create or `load()` the Video and call `play()`.
-2. For keyboard or gamepad selection, either (a) add a native `keydown` listener on `window` that calls `play()`, or (b) use the **muted-video + Web Audio soundtrack** approach. Encode the cutscene audio as a separate file in the theme's audio, load the video with `noAudio: true`, and start `this.sound.play(theme.key('cut.weaponA.2'))` when the video emits `playing`. Muted video is inaudible, so it is exempt from autoplay blocking, and the Web Audio context is already unlocked by the menu gesture (§5). The trade-off is A/V sync drift on long clips. That is acceptable for short cutscenes.
+2. For keyboard or gamepad selection, either (a) add a native `keydown` listener on `window` that calls `play()`, or (b) use the **muted-video + Web Audio soundtrack** approach. Encode the cutscene audio as a separate file in the theme's audio, load the video with `noAudio: true`, and start `this.sound.play(theme.key('cut.shot.2'))` when the video emits `playing`. Muted video is inaudible, so it is exempt from autoplay blocking, and the Web Audio context is already unlocked by the menu gesture (§5). The trade-off is A/V sync drift on long clips. That is acceptable for short cutscenes.
 3. Always handle `locked` by showing a "Tap to play" overlay and a **Skip** button. Also handle `error` and `unsupported` by skipping straight to the resume path.
 
 ### 4.3 Pausing gameplay during a cutscene and resuming
@@ -325,7 +329,7 @@ All of the following are [source] ([audio-and-sound skill](https://github.com/ph
 - Formats: pass multiple URLs, and the first supported one is used. MDN lists MP3 as supported by all major browsers, AAC as supported via MP4 (Firefox through platform decoders), and Vorbis as "Safari: No" ([MDN audio codecs](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Audio_codecs)).
 
 Per-theme pattern [inference]:
-- Each theme section provides the same logical sounds under its prefix: `<id>.sfx` (one audio sprite containing `hit`, `pickup`, `levelup`, `weaponA_fire`, and so on, with **identical marker names in every theme**), `<id>.music.game`, `<id>.music.menu`, and optionally `<id>.cut.<weapon>.<level>` soundtracks for the muted-video pattern.
+- Each theme section provides the same logical sounds under its prefix: `<id>.sfx` (one audio sprite containing `hit`, `pickup`, `levelup`, `shot_fire`, and so on, with **identical marker names in every theme**), `<id>.music.game`, `<id>.music.menu`, and optionally `<id>.cut.<weapon>.<level>` soundtracks for the muted-video pattern.
 - Game code calls `this.sound.playAudioSprite(theme.key('sfx'), 'hit')`. Use `['*.ogg', '*.m4a']`, or MP3 only, as the URL list.
 - Throttle SFX for hundreds of hits, for example with at most N concurrent `hit` instances or a per-frame cooldown. [inference]
 
@@ -339,7 +343,7 @@ All of the following are [source]:
 - Phaser has **no built-in save system**. It only feature-detects `device.features.localStorage` ([Features.js#L26](https://github.com/phaserjs/phaser/blob/v4.2.1/src/device/Features.js#L26)). The registry (a DataManager) is in-memory only.
 
 Design [inference]:
-- Keep progression **theme-agnostic**: meta-currency, unlocked weapon ids (`weaponA`...), permanent upgrade levels, best times, and cutscenes seen as `weaponA:3`, not as file names. Theme choice is a separate `prefs` record, so switching theme never touches progression. If a theme ever needs its own stats, store them in `perTheme[themeId]` beside the shared core.
+- Keep progression **theme-agnostic**: meta-currency, unlocked weapon ids (`shot`...), permanent upgrade levels, best times, and cutscenes seen as `shot:3`, not as file names. Theme choice is a separate `prefs` record, so switching theme never touches progression. If a theme ever needs its own stats, store them in `perTheme[themeId]` beside the shared core.
 - Use one key per record with a schema version and migrations:
 
 ```ts
@@ -402,9 +406,11 @@ ThemedBulletHeavenGame/
 │     └─ themes/
 │        ├─ index.json                              # list of ThemeManifest entries
 │        ├─ packs.json                              # Asset Pack, one section per theme
-│        ├─ lab/    sprites.png|json, sfx.json|ogg|m4a, music-*.ogg|m4a, cut/*.mp4|webm
-│        ├─ steam/  (same file names)
-│        └─ kabuki/ (same file names)
+│        ├─ plague/  sprites.png|json, sfx.json|ogg|m4a, music-*.ogg|m4a, cut/*.mp4|webm
+│        ├─ western/ (same file names)
+│        ├─ pirate/  (same file names)
+│        ├─ zombie/  (same file names)
+│        └─ kabuki/  (same file names)
 ├─ src/
 │  ├─ main.ts
 │  └─ game/
@@ -425,19 +431,19 @@ ThemedBulletHeavenGame/
   "version": 1,
   "themes": [
     {
-      "id": "lab",
+      "id": "plague",
       "packUrl": "assets/themes/packs.json",
-      "packSection": "lab",
+      "packSection": "plague",
       "anims": {
-        "player.walk":  { "frames": "player/walk_",  "end": 7, "frameRate": 12, "repeat": -1 },
-        "enemyA.walk":  { "frames": "enemyA/walk_",  "end": 5, "frameRate": 10, "repeat": -1 },
-        "enemyB.walk":  { "frames": "enemyB/walk_",  "end": 5, "frameRate": 8,  "repeat": -1 },
-        "enemyC.walk":  { "frames": "enemyC/walk_",  "end": 3, "frameRate": 14, "repeat": -1 },
-        "weaponA.proj": { "frames": "weaponA/proj_", "end": 3, "frameRate": 20, "repeat": -1 }
+        "player.walk":   { "frames": "player/walk_",   "end": 7, "frameRate": 12, "repeat": -1 },
+        "swarmer.walk":  { "frames": "swarmer/walk_",  "end": 5, "frameRate": 14, "repeat": -1 },
+        "splitter.walk": { "frames": "splitter/walk_", "end": 3, "frameRate": 10, "repeat": -1 },
+        "tank.walk":     { "frames": "tank/walk_",     "end": 5, "frameRate": 8,  "repeat": -1 },
+        "shot.proj":     { "frames": "shot/proj_",     "end": 3, "frameRate": 20, "repeat": -1 }
       },
       "cutscenes": {
-        "weaponA.2": { "key": "cut.weaponA.2", "noAudio": false },
-        "weaponA.3": { "key": "cut.weaponA.3", "noAudio": false },
+        "shot.2": { "key": "cut.shot.2", "noAudio": false },
+        "shot.3": { "key": "cut.shot.3", "noAudio": false },
         "player.rank2": { "key": "cut.player.rank2", "noAudio": true, "soundtrack": "cut.player.rank2.audio" }
       }
     }
@@ -448,22 +454,22 @@ ThemedBulletHeavenGame/
 ### Asset Pack (`public/assets/themes/packs.json`, one section shown)
 ```json
 {
-  "lab": {
-    "prefix": "lab.",
-    "path": "assets/themes/lab/",
+  "plague": {
+    "prefix": "plague.",
+    "path": "assets/themes/plague/",
     "files": [
       { "type": "atlas", "key": "sprites", "textureURL": "sprites.png", "atlasURL": "sprites.json" },
       { "type": "audioSprite", "key": "sfx", "jsonURL": "sfx.json", "audioURL": ["sfx.ogg", "sfx.m4a"] },
       { "type": "audio", "key": "music.game", "url": ["music-game.ogg", "music-game.m4a"] },
       { "type": "audio", "key": "cut.player.rank2.audio", "url": ["cut/player-rank2.ogg", "cut/player-rank2.m4a"] },
-      { "type": "video", "key": "cut.weaponA.2",
-        "url": [ { "url": "cut/weaponA-2.webm", "type": "vp9" }, { "url": "cut/weaponA-2.mp4", "type": "mp4" } ] },
+      { "type": "video", "key": "cut.shot.2",
+        "url": [ { "url": "cut/shot-2.webm", "type": "vp9" }, { "url": "cut/shot-2.mp4", "type": "mp4" } ] },
       { "type": "video", "key": "cut.player.rank2", "url": ["cut/player-rank2.mp4"], "noAudio": true }
     ]
   }
 }
 ```
-This yields the keys `lab.sprites`, `lab.sfx`, `lab.music.game`, `lab.cut.weaponA.2`, and so on. Other themes use identical logical keys under their own prefix. Video entries only register URLs (no download), per §4.1.
+This yields the keys `plague.sprites`, `plague.sfx`, `plague.music.game`, `plague.cut.shot.2`, and so on. Other themes use identical logical keys under their own prefix. Video entries only register URLs (no download), per §4.1.
 
 ### Game config essentials
 ```ts
