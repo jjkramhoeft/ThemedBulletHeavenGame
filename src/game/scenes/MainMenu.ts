@@ -42,7 +42,8 @@ export class MainMenu extends Phaser.Scene {
     );
     this.bestText = text(this, w / 2, 520, '', 18, '#9aa4b2');
     text(this, w / 2, 610, 'START', 36, '#7bd88f').setInteractive({ useHandCursor: true }).on('pointerdown', () => this.start());
-    text(this, w / 2, h - 40, '←/→ theme · ↑/↓ character · Enter / A to start · WASD or stick to move', 16, '#6b7380');
+    text(this, w - 90, h - 40, 'Credits', 20, '#9aa4b2').setInteractive({ useHandCursor: true }).on('pointerdown', () => this.credits());
+    text(this, w / 2, h - 40, '←/→ theme · ↑/↓ character · Enter / A to start · C / Y for credits', 16, '#6b7380');
     this.refresh();
   }
 
@@ -53,6 +54,7 @@ export class MainMenu extends Phaser.Scene {
     if (c.rightPressed) this.cycleTheme(1);
     if (c.upPressed || c.downPressed) { this.charIdx = 1 - this.charIdx; this.refresh(); }
     if (c.confirmPressed) this.start();
+    else if (c.secondaryPressed) this.credits();
   }
 
   private get theme() { return this.manifests[this.themeIdx]!; }
@@ -71,6 +73,10 @@ export class MainMenu extends Phaser.Scene {
     });
     const best = getSave(this).best[`${t.id}/${t.characters[this.charIdx]!.character}`];
     this.bestText.setText(best ? `Best: ${best.won ? 'Won' : `survived ${formatTime(best.survivedMs)}`} · ${best.kills} kills` : '');
+  }
+
+  private credits(): void {
+    this.scene.start('Credits', { themeId: this.theme.id });
   }
 
   private start(): void {

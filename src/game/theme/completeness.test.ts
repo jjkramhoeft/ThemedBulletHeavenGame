@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { WEAPON_ARCHETYPES } from '../rules/archetypes';
+import { parseCredits } from './credits';
 import { parseManifest, type ThemeIndex } from './ThemeManifest';
 import { PACK_KEYS, requiredFrames, SFX_MARKERS } from './slots';
 
@@ -65,6 +66,16 @@ describe.each(index.themes)('Theme %s', (id) => {
     const have = new Set(Object.keys(atlas.frames));
     const need = requiredFrames(manifest.characters.map((c) => c.character), manifest.walk, manifest.decorations);
     expect(need.filter((f) => !have.has(f))).toEqual([]);
+  });
+
+  it.skipIf(manifest.devOnly && !manifest.credits)('credits every third-party file it ships', () => {
+    expect(manifest.credits, 'a Theme that ships needs a credits file').toBeDefined();
+    const rows = parseCredits(readFileSync(join(PUBLIC, manifest.credits!), 'utf8'));
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      expect(r.authors.length, `${r.file} has no authors`).toBeGreaterThan(0);
+      expect(r.licenses.length, `${r.file} has no licence`).toBeGreaterThan(0);
+    }
   });
 
   it('has every SFX marker', () => {

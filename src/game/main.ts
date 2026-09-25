@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { HEIGHT, WIDTH } from './config';
 import { Boot } from './scenes/Boot';
 import { ChestReveal } from './scenes/ChestReveal';
+import { Credits } from './scenes/Credits';
 import { Cutscene } from './scenes/Cutscene';
 import { Game } from './scenes/Game';
 import { GameOver } from './scenes/GameOver';
@@ -23,6 +24,6 @@ export function startGame(parent: string): Phaser.Game {
     physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false } },
     input: { gamepad: true },
     // Scene order is draw order: modal scenes render above Game and HUD.
-    scene: [Boot, MainMenu, Loading, Game, HUD, LevelUp, ChestReveal, Cutscene, GameOver],
+    scene: [Boot, MainMenu, Credits, Loading, Game, HUD, LevelUp, ChestReveal, Cutscene, GameOver],
   });
 }

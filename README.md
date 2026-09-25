@@ -26,7 +26,7 @@ The running game is also available as `window.game` in the browser console.
 
 ## Theme assets
 
-`npm run assets:plague` rebuilds Plague Village. Its characters are assembled from the [Universal LPC Spritesheet Generator](https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator) at a pinned commit. On first use the script clones the generator (blobless and sparse) into `.cache/ulpc` and then fetches only the sprite folders the recipes use; set `ULPC_DIR` to use a different checkout. The script also writes `CREDITS.csv` next to the Theme. That file lists every LPC author and licence the art depends on, and it must ship with the game. The effects, pickups, tileset and audio are drawn and synthesised by the script as placeholders.
+`npm run assets:plague` rebuilds Plague Village. Its characters are assembled from the [Universal LPC Spritesheet Generator](https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator) at a pinned commit. On first use the script clones the generator (blobless and sparse) into `.cache/ulpc` and then fetches only the sprite folders the recipes use; set `ULPC_DIR` to use a different checkout. The script also writes `CREDITS.csv` next to the Theme. That file lists every LPC author and licence the art depends on, and it must ship with the game. The Theme's `theme.json` points to it (`credits`), and the in-game Credits screen (C / gamepad Y in the menu) shows its authors, licences and source links. The effects, pickups, tileset and audio are drawn and synthesised by the script as placeholders.
 
 ### Debug Theme
 
@@ -36,4 +36,5 @@ The running game is also available as `window.game` in the browser console.
 
 1. Create `public/assets/themes/<id>/` containing `theme.json`, `pack.json` (one section named `<id>` with prefix `<id>.`) and the files the pack lists.
 2. Add `<id>` to `public/assets/themes/index.json`.
-3. Run `npm test`. The completeness test lists every missing frame, SFX marker, pack key and file.
+3. If the Theme uses third-party art, set `credits` in `theme.json` to its CREDITS.csv. The test requires it for every Theme that isn't dev-only.
+4. Run `npm test`. The completeness test lists every missing frame, SFX marker, pack key and file.

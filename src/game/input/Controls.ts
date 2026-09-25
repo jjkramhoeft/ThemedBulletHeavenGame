@@ -2,17 +2,17 @@ import Phaser from 'phaser';
 
 const STICK_DEADZONE = 0.2;
 
-type Action = 'confirm' | 'back' | 'left' | 'right' | 'up' | 'down' | 'one' | 'two' | 'three';
+type Action = 'confirm' | 'back' | 'secondary' | 'left' | 'right' | 'up' | 'down' | 'one' | 'two' | 'three';
 
 const KEY_ACTIONS: Record<string, Action> = {
-  Enter: 'confirm', NumpadEnter: 'confirm', Space: 'confirm', Escape: 'back',
+  Enter: 'confirm', NumpadEnter: 'confirm', Space: 'confirm', Escape: 'back', KeyC: 'secondary',
   ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
   ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
   Digit1: 'one', Numpad1: 'one', Digit2: 'two', Numpad2: 'two', Digit3: 'three', Numpad3: 'three',
 };
 
-type PadState = Record<'confirm' | 'back' | 'left' | 'right' | 'up' | 'down', boolean>;
-const NO_PAD: PadState = { confirm: false, back: false, left: false, right: false, up: false, down: false };
+type PadState = Record<'confirm' | 'back' | 'secondary' | 'left' | 'right' | 'up' | 'down', boolean>;
+const NO_PAD: PadState = { confirm: false, back: false, secondary: false, left: false, right: false, up: false, down: false };
 
 /**
  * Keyboard + gamepad input for one scene: a held movement vector and per-frame menu actions.
@@ -44,7 +44,7 @@ export class Controls {
     this.latched = new Set();
     const p = this.pad;
     const now: PadState = p ? {
-      confirm: p.A, back: p.B,
+      confirm: p.A, back: p.B, secondary: p.Y,
       left: p.left || p.leftStick.x < -0.6, right: p.right || p.leftStick.x > 0.6,
       up: p.up || p.leftStick.y < -0.6, down: p.down || p.leftStick.y > 0.6,
     } : NO_PAD;
@@ -70,6 +70,8 @@ export class Controls {
 
   get confirmPressed() { return this.thisFrame.has('confirm'); }
   get backPressed() { return this.thisFrame.has('back'); }
+  /** C key or gamepad Y: a screen's secondary action (e.g. Credits in the menu) */
+  get secondaryPressed() { return this.thisFrame.has('secondary'); }
   get leftPressed() { return this.thisFrame.has('left'); }
   get rightPressed() { return this.thisFrame.has('right'); }
   get upPressed() { return this.thisFrame.has('up'); }

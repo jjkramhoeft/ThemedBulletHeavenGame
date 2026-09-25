@@ -2,6 +2,7 @@
   "id": "plague",
   "name": "Plague Village",
   "pack": "assets/themes/plague/pack.json",
+  "credits": "assets/themes/plague/CREDITS.csv",
   "characters": [
     { "character": "aura-start", "name": "Plague Doctor" },
     { "character": "sweep-start", "name": "Village Blacksmith" }

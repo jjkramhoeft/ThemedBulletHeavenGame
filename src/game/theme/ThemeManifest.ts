@@ -10,6 +10,8 @@ export interface ThemeManifest {
   devOnly?: boolean;
   /** URL of this Theme's Asset Pack; its section key equals `id` */
   pack: string;
+  /** URL of the CREDITS.csv for third-party assets. Required for every Theme that ships. */
+  credits?: string;
   characters: Array<{ character: CharacterId; name: string }>;
   names: Record<NamedSlot, string>;
   walk: WalkSpec;
@@ -39,5 +41,6 @@ export function parseManifest(raw: unknown): ThemeManifest {
   const loopFrom = m!.walk!.loopFrom ?? 0;
   if (loopFrom < 0 || loopFrom >= m!.walk!.frames) fail('walk.loopFrom must be a frame index');
   if (typeof m!.decorations !== 'number') fail('missing decorations');
+  if (m!.credits !== undefined && typeof m!.credits !== 'string') fail('credits must be a URL');
   return m as ThemeManifest;
 }
