@@ -211,11 +211,11 @@ These notes come from a check of the generator repo at commit `4963a69` (2026-09
     - yakuza tattoos: the script recolours the bare arm skin of the Retired Yakuza and the Bottle-throwing Yakuza in an irezumi pattern;
     - a suited *large* bouncer (the muscular body has no suit): the Bouncer is the male body in a suit, scaled 1.5× through `actorScale`;
     - formal trousers (`legs_formal`) can't be recoloured at `4963a69`, because their walk sheet isn't drawn in the cloth base palette. The Theme uses `legs_pants` instead.
-  - **Dead Man's Gulch:**
-    - cowboy hat (the cavalier hat is a stand-in);
-    - face bandana;
-    - sheriff star;
-    - rifle and revolver.
+  - **Dead Man's Gulch:** Built: `scripts/make-gulch-theme.mjs`. It draws each of these onto every frame:
+    - cowboy hat: a pinched crown and wide brim, placed from the head layer;
+    - face bandana: the visible face below the eyes, recoloured with a dotted print;
+    - sheriff star: a tin star on the Undead Sheriff's chest;
+    - rifle and revolver: the rifle is slung on the back, drawn by the shared `slingLongGun` in `scripts/lib/props.mjs` (Buccaneer Bay's muskets use it too), and the revolver sits in a hip holster.
   - **Suburban Outbreak:**
     - Bloater body;
     - crawl animation for Crawlers;

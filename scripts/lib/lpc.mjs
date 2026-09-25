@@ -64,13 +64,15 @@ export class Lpc {
     this.used = new Map(); // composed file -> its CREDITS.csv key
   }
 
-  palette(material) {
-    if (!this.palettes.has(material)) {
+  /** A material's default source colour and one palette set of it (`ulpc`, or e.g. `lpcr`). */
+  palette(material, set = 'ulpc') {
+    const key = `${material}_${set}`;
+    if (!this.palettes.has(key)) {
       const base = JSON.parse(readFileSync(join(this.dir, `palette_definitions/${material}/meta_${material}.json`), 'utf8')).base;
-      const colors = JSON.parse(readFileSync(join(this.dir, `palette_definitions/${material}/${material}_ulpc.json`), 'utf8'));
-      this.palettes.set(material, { base, colors });
+      const colors = JSON.parse(readFileSync(join(this.dir, `palette_definitions/${material}/${key}.json`), 'utf8'));
+      this.palettes.set(key, { base, colors });
     }
-    return this.palettes.get(material);
+    return this.palettes.get(key);
   }
 
   /**
@@ -91,7 +93,7 @@ export class Lpc {
       if (!template) continue;
       const base = template.replace(/\$\{(\w+)\}/g, (_, k) => spec.vars?.[k] ?? _);
       const variant = spec.variant ?? (def.variants?.includes(spec.color) ? spec.color : undefined);
-      const sheetPath = (dir) => (variant ? `${dir}${anim}/${variant}.png` : `${dir}${anim}.png`);
+      const sheetPath = (dir) => (variant ? `${dir}${anim}/${variant.replaceAll(" ", "_")}.png` : `${dir}${anim}.png`); // "dark gray" is dark_gray.png
       const file = sheetPath(base);
       if (!this.tracked.has(`spritesheets/${file}`)) continue; // e.g. back/front layers only drawn for attack animations
       const material = spec.material ?? def.recolors?.material;
@@ -115,8 +117,11 @@ export class Lpc {
 
   recolor(c, { material, from: fromName, to }) {
     const { base, colors } = this.palette(material);
-    const from = colors[fromName ?? base], target = colors[to];
-    if (!from || !target) throw new Error(`LPC: unknown ${material} colour "${to}" (have ${Object.keys(colors).join(', ')})`);
+    // An item's source colour may name another palette set, e.g. "lpcr.ivory" or "ulpc.zombie".
+    const [set, name] = fromName?.includes('.') ? fromName.split('.') : ['ulpc', fromName ?? base];
+    const from = this.palette(material, set).colors[name], target = colors[to];
+    if (!from) throw new Error(`LPC: unknown ${material} source colour "${fromName}"`);
+    if (!target) throw new Error(`LPC: unknown ${material} colour "${to}" (have ${Object.keys(colors).join(', ')})`);
     const parse = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
     const src = from.map(parse), dst = target.map(parse);
     const p = c.px;

@@ -14,7 +14,7 @@ All characters come from the [Universal LPC Spritesheet Character Generator](htt
    - `color` is either one of the item's `variants` or a palette colour for its material, listed in `palette_definitions/<material>/<material>_ulpc.json`.
    - Heads need `material: 'body'` so they match the body colour. The script's `skin()` helper does this.
 3. **Build.** `npm run assets:<id>`. The first run clones the generator (pinned in [`scripts/lib/lpc.mjs`](../scripts/lib/lpc.mjs)) into `.cache/ulpc`, then fetches only the sprite folders your recipes use. Each composed sheet is also written to `.cache/<id>-<actor>.png` so you can check it.
-4. **Fill the gaps.** LPC has no firearms, no fat or oversized body, and no crawl animation. [themes.md §3](design/themes.md#3-lpc-notes) lists the gaps for each Theme. Draw missing parts as an overlay in the script (see `addBeaks`), or combine existing sprites (see `procession`).
+4. **Fill the gaps.** LPC has no firearms, no fat or oversized body, and no crawl animation. [themes.md §3](design/themes.md#3-lpc-notes) lists the gaps for each Theme. Draw missing parts as an overlay in the script (see `addBeaks`, or [`scripts/lib/props.mjs`](../scripts/lib/props.mjs) for a slung long gun and per-frame helpers), or combine existing sprites (see `crowd` in [`scripts/lib/lpc.mjs`](../scripts/lib/lpc.mjs)).
 
 What the game expects:
 - **Walk animation only:** frames are 64×64, in 4 rows ordered up, left, down, right. Frame 0 is the standing pose, so set `"walk": { "frames": 9, "frameRate": 10, "loopFrom": 1 }` in `theme.json`.

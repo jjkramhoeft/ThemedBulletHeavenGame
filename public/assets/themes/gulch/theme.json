@@ -1,0 +1,20 @@
+{
+  "id": "gulch",
+  "name": "Dead Man's Gulch",
+  "pack": "assets/themes/gulch/pack.json",
+  "credits": "assets/themes/gulch/CREDITS.csv",
+  "characters": [
+    { "character": "shot-start", "name": "Bounty Hunter" },
+    { "character": "aura-start", "name": "Snake-oil Doctor" }
+  ],
+  "names": {
+    "sweep": "Lasso Crack", "shot": "Revolver", "orbit": "Spinning Horseshoes", "aura": "Dust Devil",
+    "chain": "Telegraph-wire Spark", "pulse": "Dynamite Blast", "lure": "Whiskey Bottle",
+    "swarmer": "Bandits", "splitter": "Outlaw Posse", "fragment": "Lone Outlaws",
+    "tank": "Hired Strongman", "ranged": "Rifleman on a Rooftop", "boss": "The Undead Sheriff",
+    "xp": "Gold Nugget", "heal": "Can of Beans", "magnet": "Horseshoe Magnet", "chest": "Strongbox"
+  },
+  "walk": { "frames": 9, "frameRate": 10, "loopFrom": 1 },
+  "decorations": 6,
+  "actorScale": { "boss": 2, "tank": 1.5 }
+}
