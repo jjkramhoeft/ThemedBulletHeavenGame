@@ -1,0 +1,82 @@
+{
+  "resources": [
+    "sfx.wav"
+  ],
+  "spritemap": {
+    "hit": {
+      "start": 0,
+      "end": 0.07,
+      "loop": false
+    },
+    "pickup": {
+      "start": 0.12,
+      "end": 0.4,
+      "loop": false
+    },
+    "levelUp": {
+      "start": 0.4499,
+      "end": 1.4699,
+      "loop": false
+    },
+    "chest": {
+      "start": 1.5199,
+      "end": 2.8199,
+      "loop": false
+    },
+    "playerHurt": {
+      "start": 2.8699,
+      "end": 3.0699,
+      "loop": false
+    },
+    "bossTelegraph": {
+      "start": 3.1199,
+      "end": 4.0198,
+      "loop": false
+    },
+    "win": {
+      "start": 4.0698,
+      "end": 6.6697,
+      "loop": false
+    },
+    "lose": {
+      "start": 6.7197,
+      "end": 9.3196,
+      "loop": false
+    },
+    "fire_sweep": {
+      "start": 9.3696,
+      "end": 9.5096,
+      "loop": false
+    },
+    "fire_shot": {
+      "start": 9.5596,
+      "end": 9.6796,
+      "loop": false
+    },
+    "fire_orbit": {
+      "start": 9.7296,
+      "end": 9.9034,
+      "loop": false
+    },
+    "fire_aura": {
+      "start": 9.9534,
+      "end": 10.2034,
+      "loop": false
+    },
+    "fire_chain": {
+      "start": 10.2533,
+      "end": 10.4733,
+      "loop": false
+    },
+    "fire_pulse": {
+      "start": 10.5233,
+      "end": 11.0233,
+      "loop": false
+    },
+    "fire_lure": {
+      "start": 11.0733,
+      "end": 11.2232,
+      "loop": false
+    }
+  }
+}

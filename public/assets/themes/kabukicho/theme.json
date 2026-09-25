@@ -1,0 +1,20 @@
+{
+  "id": "kabukicho",
+  "name": "Kabukicho, Tokyo at Night",
+  "pack": "assets/themes/kabukicho/pack.json",
+  "credits": "assets/themes/kabukicho/CREDITS.csv",
+  "characters": [
+    { "character": "lure-start", "name": "Host-club Host" },
+    { "character": "sweep-start", "name": "Retired Yakuza" }
+  ],
+  "names": {
+    "sweep": "Baseball Bat", "shot": "Handgun", "orbit": "Spinning Pachinko Balls", "aura": "Cigarette Smoke",
+    "chain": "Shorted Neon Sign", "pulse": "Karaoke Mic Scream", "lure": "Cash",
+    "swarmer": "Drunk Salarymen", "splitter": "Tout Crew", "fragment": "Lone Touts",
+    "tank": "Bouncer", "ranged": "Bottle-throwing Yakuza", "boss": "Yakuza Boss",
+    "xp": "Yen Coin", "heal": "Energy Drink", "magnet": "Lucky Cat", "chest": "Hostess-club Gift Box"
+  },
+  "walk": { "frames": 9, "frameRate": 10, "loopFrom": 1 },
+  "decorations": 6,
+  "actorScale": { "boss": 2, "tank": 1.5 }
+}

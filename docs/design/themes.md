@@ -202,10 +202,11 @@ These notes come from a check of the generator repo at commit `4963a69` (2026-09
 - **Custom character parts each theme needs:**
   - **Plague Village:** Plague Doctor beak mask. Built: `scripts/make-plague-theme.mjs` draws the beak onto every frame, positioned from the LPC mask layer. The Flagellant Procession is composed from three Lone Flagellant sprites in one 96 px frame.
   - **Buccaneer Bay:** musket and cannon props.
-  - **Kabukicho:**
-    - bottle projectile;
-    - yakuza tattoos;
-    - a suited *large* bouncer (the muscular body has no suit).
+  - **Kabukicho:** Built: `scripts/make-kabukicho-theme.mjs`.
+    - bottle projectile: drawn as custom art (`ranged/proj`);
+    - yakuza tattoos: the script recolours the bare arm skin of the Retired Yakuza and the Bottle-throwing Yakuza in an irezumi pattern;
+    - a suited *large* bouncer (the muscular body has no suit): the Bouncer is the male body in a suit, scaled 1.5× through `actorScale`;
+    - formal trousers (`legs_formal`) can't be recoloured at `4963a69`, because their walk sheet isn't drawn in the cloth base palette. The Theme uses `legs_pants` instead.
   - **Dead Man's Gulch:**
     - cowboy hat (the cavalier hat is a stand-in);
     - face bandana;

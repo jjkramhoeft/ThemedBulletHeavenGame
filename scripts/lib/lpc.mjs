@@ -61,7 +61,7 @@ export class Lpc {
     const [, ...rows] = parseCsv(readFileSync(join(dir, 'CREDITS.csv'), 'utf8'));
     this.credits = new Map(rows.map(([file, notes, authors, licenses, urls]) => [file, { file, notes, authors, licenses, urls }]));
     this.palettes = new Map();
-    this.used = new Set();
+    this.used = new Map(); // composed file -> its CREDITS.csv key
   }
 
   palette(material) {
@@ -77,6 +77,7 @@ export class Lpc {
    * Resolves one recipe layer, e.g. `{ item: 'torso_clothes_longsleeve', color: 'black' }`, to files.
    * `color` picks a variant when the item has variants, otherwise a palette colour for its material.
    * `material` overrides the recolour material (heads follow the body palette).
+   * `vars` fills `${name}` placeholders in the item's paths, e.g. `{ head: 'male' }` for face overlays.
    */
   resolve(spec, bodyType, anim = 'walk') {
     const def = this.defs.get(spec.item);
@@ -86,14 +87,16 @@ export class Lpc {
       const layer = def[`layer_${n}`];
       if (!layer) break;
       if (layer.custom_animation) continue;
-      const base = layer[bodyType];
-      if (!base) continue;
+      const template = layer[bodyType];
+      if (!template) continue;
+      const base = template.replace(/\$\{(\w+)\}/g, (_, k) => spec.vars?.[k] ?? _);
       const variant = spec.variant ?? (def.variants?.includes(spec.color) ? spec.color : undefined);
-      const file = variant ? `${base}${anim}/${variant}.png` : `${base}${anim}.png`;
+      const sheetPath = (dir) => (variant ? `${dir}${anim}/${variant}.png` : `${dir}${anim}.png`);
+      const file = sheetPath(base);
       if (!this.tracked.has(`spritesheets/${file}`)) continue; // e.g. back/front layers only drawn for attack animations
       const material = spec.material ?? def.recolors?.material;
       const recolor = !variant && spec.color && material ? { material, to: spec.color } : null;
-      out.push({ zPos: layer.zPos ?? 0, file, recolor, item: spec.item });
+      out.push({ zPos: layer.zPos ?? 0, file, recolor, item: spec.item, credit: sheetPath(template) }); // CREDITS.csv keeps the ${} placeholders
     }
     if (out.length === 0) throw new Error(`LPC: "${spec.item}" has no ${anim} sheet for body type ${bodyType}`);
     return out;
@@ -137,7 +140,7 @@ export class Lpc {
         continue;
       }
       sheet.draw(img);
-      this.used.add(l.file);
+      this.used.set(l.file, l.credit);
     }
     return sheet;
   }
@@ -150,10 +153,11 @@ export class Lpc {
   /** CREDITS.csv rows for every file composed so far (per-animation rows cover their colour variants). */
   usedCredits() {
     const rows = new Map();
-    for (const f of this.used) {
-      const row = this.credits.get(f) ?? this.credits.get(f.replace(/\/([^/]+)\/[^/]+\.png$/, '/$1.png'));
+    const perAnim = (p) => p.replace(/\/([^/]+)\/[^/]+\.png$/, '/$1.png');
+    for (const [f, key] of this.used) {
+      const [row, file] = this.credits.has(key) ? [this.credits.get(key), f] : [this.credits.get(perAnim(key)), perAnim(f)];
       if (!row) throw new Error(`LPC: no credits entry for ${f}; refusing to ship unattributed art`);
-      rows.set(row.file, row);
+      rows.set(file, { ...row, file });
     }
     return [...rows.values()].sort((a, b) => a.file.localeCompare(b.file));
   }
@@ -164,11 +168,25 @@ export function creditsCsv(rows) {
   return ['filename,notes,authors,licenses,urls', ...rows.map((r) => [r.file, r.notes, r.authors, r.licenses, r.urls].map(q).join(','))].join('\n') + '\n';
 }
 
-/** Splits a composed walk sheet into frames named `<actor>/walk_<dir>_<i>`. */
-export function walkFrames(actor, sheet) {
+/** Splits a composed walk sheet into frames named `<actor>/walk_<dir>_<i>`; `w` is the frame width. */
+export function walkFrames(actor, sheet, w = FRAME) {
   const frames = [];
   DIRS.forEach((dir, row) => {
-    for (let i = 0; i < WALK_FRAMES; i++) frames.push({ name: `${actor}/walk_${dir}_${i}`, c: sheet.crop(i * FRAME, row * FRAME, FRAME, FRAME) });
+    for (let i = 0; i < WALK_FRAMES; i++) frames.push({ name: `${actor}/walk_${dir}_${i}`, c: sheet.crop(i * w, row * FRAME, w, FRAME) });
   });
   return frames;
+}
+
+/** Three copies of one walk sheet walking together in a 96 px frame, the back two out of step so they read as a crowd. */
+export function crowd(sheet) {
+  const W = 96;
+  const out = new Canvas(W * WALK_FRAMES, FRAME * DIRS.length);
+  for (let row = 0; row < DIRS.length; row++)
+    for (let i = 0; i < WALK_FRAMES; i++) {
+      const f = sheet.crop(i * FRAME, row * FRAME, FRAME, FRAME);
+      const lag = sheet.crop(((i + 3) % 8 + 1) * FRAME, row * FRAME, FRAME, FRAME);
+      const ox = i * W, oy = row * FRAME;
+      out.draw(lag, ox + 2, oy - 4).draw(lag, ox + 30, oy - 4).draw(f, ox + 16, oy);
+    }
+  return { sheet: out, width: W };
 }

@@ -1,0 +1,167 @@
+{
+  "kabukicho": {
+    "prefix": "kabukicho.",
+    "path": "assets/themes/kabukicho/",
+    "files": [
+      {
+        "type": "atlas",
+        "key": "sprites",
+        "textureURL": "sprites.png",
+        "atlasURL": "sprites.json"
+      },
+      {
+        "type": "image",
+        "key": "ground",
+        "url": "ground.png"
+      },
+      {
+        "type": "audioSprite",
+        "key": "sfx",
+        "jsonURL": "sfx.json",
+        "audioURL": [
+          "sfx.wav"
+        ]
+      },
+      {
+        "type": "audio",
+        "key": "music.menu",
+        "url": [
+          "music-menu.wav"
+        ]
+      },
+      {
+        "type": "audio",
+        "key": "music.game",
+        "url": [
+          "music-game.wav"
+        ]
+      },
+      {
+        "type": "video",
+        "key": "cut.sweep",
+        "url": [
+          {
+            "url": "cut/sweep.mp4",
+            "type": "mp4"
+          }
+        ],
+        "noAudio": true
+      },
+      {
+        "type": "audio",
+        "key": "cut.sweep.audio",
+        "url": [
+          "cut/sweep.wav"
+        ]
+      },
+      {
+        "type": "video",
+        "key": "cut.shot",
+        "url": [
+          {
+            "url": "cut/shot.mp4",
+            "type": "mp4"
+          }
+        ],
+        "noAudio": true
+      },
+      {
+        "type": "audio",
+        "key": "cut.shot.audio",
+        "url": [
+          "cut/shot.wav"
+        ]
+      },
+      {
+        "type": "video",
+        "key": "cut.orbit",
+        "url": [
+          {
+            "url": "cut/orbit.mp4",
+            "type": "mp4"
+          }
+        ],
+        "noAudio": true
+      },
+      {
+        "type": "audio",
+        "key": "cut.orbit.audio",
+        "url": [
+          "cut/orbit.wav"
+        ]
+      },
+      {
+        "type": "video",
+        "key": "cut.aura",
+        "url": [
+          {
+            "url": "cut/aura.mp4",
+            "type": "mp4"
+          }
+        ],
+        "noAudio": true
+      },
+      {
+        "type": "audio",
+        "key": "cut.aura.audio",
+        "url": [
+          "cut/aura.wav"
+        ]
+      },
+      {
+        "type": "video",
+        "key": "cut.chain",
+        "url": [
+          {
+            "url": "cut/chain.mp4",
+            "type": "mp4"
+          }
+        ],
+        "noAudio": true
+      },
+      {
+        "type": "audio",
+        "key": "cut.chain.audio",
+        "url": [
+          "cut/chain.wav"
+        ]
+      },
+      {
+        "type": "video",
+        "key": "cut.pulse",
+        "url": [
+          {
+            "url": "cut/pulse.mp4",
+            "type": "mp4"
+          }
+        ],
+        "noAudio": true
+      },
+      {
+        "type": "audio",
+        "key": "cut.pulse.audio",
+        "url": [
+          "cut/pulse.wav"
+        ]
+      },
+      {
+        "type": "video",
+        "key": "cut.lure",
+        "url": [
+          {
+            "url": "cut/lure.mp4",
+            "type": "mp4"
+          }
+        ],
+        "noAudio": true
+      },
+      {
+        "type": "audio",
+        "key": "cut.lure.audio",
+        "url": [
+          "cut/lure.wav"
+        ]
+      }
+    ]
+  }
+}

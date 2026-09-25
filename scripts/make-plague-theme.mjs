@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { audioSprite, bell, concat, hz, mix, noise, place, pluck, RATE, silence, tone, wav } from './lib/audio.mjs';
 import { iconCard, writePlaceholderClips } from './lib/cutscenes.mjs';
-import { creditsCsv, DIRS, FRAME, Lpc, walkFrames, WALK_FRAMES } from './lib/lpc.mjs';
+import { creditsCsv, crowd, DIRS, FRAME, Lpc, walkFrames, WALK_FRAMES } from './lib/lpc.mjs';
 import { Canvas, hex, lcg, mixColor, packAtlas, tileNoise, withAlpha, writePng } from './lib/raster.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -121,28 +121,6 @@ function addBeaks(sheet, maskSheet) {
   });
 }
 
-/** The Flagellant Procession: three lone flagellants walking in step, in one wider frame. */
-function procession(fragmentSheet) {
-  const W = 96;
-  const sheet = new Canvas(W * WALK_FRAMES, FRAME * DIRS.length);
-  for (let row = 0; row < DIRS.length; row++)
-    for (let i = 0; i < WALK_FRAMES; i++) {
-      const f = fragmentSheet.crop(i * FRAME, row * FRAME, FRAME, FRAME);
-      const lag = fragmentSheet.crop(((i + 3) % 8 + 1) * FRAME, row * FRAME, FRAME, FRAME); // out-of-step walkers look like a crowd
-      const ox = i * W, oy = row * FRAME;
-      sheet.draw(lag, ox + 2, oy - 4).draw(lag, ox + 30, oy - 4).draw(f, ox + 16, oy);
-    }
-  return sheet;
-}
-
-function walkFramesSized(actor, sheet, w) {
-  const frames = [];
-  DIRS.forEach((dir, row) => {
-    for (let i = 0; i < WALK_FRAMES; i++) frames.push({ name: `${actor}/walk_${dir}_${i}`, c: sheet.crop(i * w, row * FRAME, w, FRAME) });
-  });
-  return frames;
-}
-
 const lpc = new Lpc(process.env.ULPC_DIR ?? join(CACHE, 'ulpc'));
 const frames = [];
 for (const [actor, recipe] of Object.entries(RECIPES)) {
@@ -150,7 +128,7 @@ for (const [actor, recipe] of Object.entries(RECIPES)) {
   if (recipe.beak) addBeaks(sheet, lpc.composeOnly(recipe, ['facial_mask_plain']));
   writePng(join(CACHE, `${ID}-${actor}.png`), sheet); // for inspection
   frames.push(...walkFrames(actor, sheet));
-  if (actor === 'fragment') frames.push(...walkFramesSized('splitter', procession(sheet), 96));
+  if (actor === 'fragment') { const p = crowd(sheet); frames.push(...walkFrames('splitter', p.sheet, p.width)); } // the Flagellant Procession
 }
 
 // ------------------------------------------------------------------ custom art (effects, pickups, tileset)

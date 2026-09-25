@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "assets:debug": "node scripts/make-debug-theme.mjs",
-    "assets:plague": "node scripts/make-plague-theme.mjs"
+    "assets:plague": "node scripts/make-plague-theme.mjs",
+    "assets:kabukicho": "node scripts/make-kabukicho-theme.mjs"
   },
   "dependencies": {
     "phaser": "^4.2.1"
