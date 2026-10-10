@@ -11,8 +11,8 @@ These rules are identical in every Theme. Terms are defined in [CONTEXT.md](../.
 ## Run
 
 - **Setup:** the player picks a Theme and one of that Theme's two Characters. Prefs remember the last pick.
-- **Length:** a Run lasts **10 minutes**. The Boss spawns at 10:00. Killing it wins the Run; dying loses it.
-- **Wave Script:** one shared Wave Script drives every spawn, with an Elite every 60 s.
+- **Length:** a Run lasts **4 minutes**. The Boss spawns at 4:00. Killing it wins the Run; dying loses it.
+- **Wave Script:** one shared Wave Script drives every spawn, in 10 equal steps (24 s each), with an Elite at every step.
 - **Map:** an endless field. The ground tiles and follows the camera. Decorations are placed deterministically from a seed and never block movement.
 - **Screen:** internal resolution is 1280×720 with 1:1 pixel art (`pixelArt: true`) and FIT scaling. Camera zoom is set in one place so it can be tuned during playtests.
 

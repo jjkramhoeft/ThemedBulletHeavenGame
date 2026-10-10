@@ -1,9 +1,11 @@
 import type { EnemyArchetype } from './archetypes';
 import { type Rng, pick } from './rng';
 
-export const RUN_LENGTH_MS = 10 * 60_000;
+export const RUN_LENGTH_MS = 4 * 60_000;
 export const BOSS_AT_MS = RUN_LENGTH_MS;
-export const ELITE_EVERY_MS = 60_000;
+/** The Wave Script ramps through 10 equal steps, whatever the Run length. */
+const STEP_MS = RUN_LENGTH_MS / 10;
+export const ELITE_EVERY_MS = STEP_MS;
 
 /** Enemies the Wave Script spawns directly. Fragments come from Splitters, the Boss from the timer. */
 export type WaveArchetype = Exclude<EnemyArchetype, 'boss' | 'fragment'>;
@@ -14,20 +16,20 @@ export interface WaveSegment {
   spawns: Partial<Record<WaveArchetype, { everyMs: number; group: number }>>;
 }
 
-const min = (m: number) => m * 60_000;
+const step = (n: number) => n * STEP_MS;
 
 /** The single shared Wave Script. Segments must be sorted by `fromMs` and start at 0. */
 export const WAVE_SCRIPT: readonly WaveSegment[] = [
-  { fromMs: min(0), spawns: { swarmer: { everyMs: 1000, group: 3 } } },
-  { fromMs: min(1), spawns: { swarmer: { everyMs: 800, group: 3 }, splitter: { everyMs: 5000, group: 1 } } },
-  { fromMs: min(2), spawns: { swarmer: { everyMs: 700, group: 4 }, splitter: { everyMs: 4000, group: 1 }, ranged: { everyMs: 6000, group: 1 } } },
-  { fromMs: min(3), spawns: { swarmer: { everyMs: 650, group: 4 }, splitter: { everyMs: 3500, group: 2 }, ranged: { everyMs: 5000, group: 1 }, tank: { everyMs: 8000, group: 1 } } },
-  { fromMs: min(4), spawns: { swarmer: { everyMs: 600, group: 5 }, splitter: { everyMs: 3000, group: 2 }, ranged: { everyMs: 4500, group: 2 }, tank: { everyMs: 7000, group: 1 } } },
-  { fromMs: min(5), spawns: { swarmer: { everyMs: 550, group: 5 }, splitter: { everyMs: 2800, group: 2 }, ranged: { everyMs: 4000, group: 2 }, tank: { everyMs: 6000, group: 2 } } },
-  { fromMs: min(6), spawns: { swarmer: { everyMs: 500, group: 6 }, splitter: { everyMs: 2500, group: 3 }, ranged: { everyMs: 3500, group: 2 }, tank: { everyMs: 5000, group: 2 } } },
-  { fromMs: min(7), spawns: { swarmer: { everyMs: 450, group: 6 }, splitter: { everyMs: 2200, group: 3 }, ranged: { everyMs: 3000, group: 3 }, tank: { everyMs: 4500, group: 2 } } },
-  { fromMs: min(8), spawns: { swarmer: { everyMs: 400, group: 7 }, splitter: { everyMs: 2000, group: 3 }, ranged: { everyMs: 2800, group: 3 }, tank: { everyMs: 4000, group: 3 } } },
-  { fromMs: min(9), spawns: { swarmer: { everyMs: 350, group: 8 }, splitter: { everyMs: 1800, group: 4 }, ranged: { everyMs: 2500, group: 3 }, tank: { everyMs: 3500, group: 3 } } },
+  { fromMs: step(0), spawns: { swarmer: { everyMs: 1000, group: 3 } } },
+  { fromMs: step(1), spawns: { swarmer: { everyMs: 800, group: 3 }, splitter: { everyMs: 5000, group: 1 } } },
+  { fromMs: step(2), spawns: { swarmer: { everyMs: 700, group: 4 }, splitter: { everyMs: 4000, group: 1 }, ranged: { everyMs: 6000, group: 1 } } },
+  { fromMs: step(3), spawns: { swarmer: { everyMs: 650, group: 4 }, splitter: { everyMs: 3500, group: 2 }, ranged: { everyMs: 5000, group: 1 }, tank: { everyMs: 8000, group: 1 } } },
+  { fromMs: step(4), spawns: { swarmer: { everyMs: 600, group: 5 }, splitter: { everyMs: 3000, group: 2 }, ranged: { everyMs: 4500, group: 2 }, tank: { everyMs: 7000, group: 1 } } },
+  { fromMs: step(5), spawns: { swarmer: { everyMs: 550, group: 5 }, splitter: { everyMs: 2800, group: 2 }, ranged: { everyMs: 4000, group: 2 }, tank: { everyMs: 6000, group: 2 } } },
+  { fromMs: step(6), spawns: { swarmer: { everyMs: 500, group: 6 }, splitter: { everyMs: 2500, group: 3 }, ranged: { everyMs: 3500, group: 2 }, tank: { everyMs: 5000, group: 2 } } },
+  { fromMs: step(7), spawns: { swarmer: { everyMs: 450, group: 6 }, splitter: { everyMs: 2200, group: 3 }, ranged: { everyMs: 3000, group: 3 }, tank: { everyMs: 4500, group: 2 } } },
+  { fromMs: step(8), spawns: { swarmer: { everyMs: 400, group: 7 }, splitter: { everyMs: 2000, group: 3 }, ranged: { everyMs: 2800, group: 3 }, tank: { everyMs: 4000, group: 3 } } },
+  { fromMs: step(9), spawns: { swarmer: { everyMs: 350, group: 8 }, splitter: { everyMs: 1800, group: 4 }, ranged: { everyMs: 2500, group: 3 }, tank: { everyMs: 3500, group: 3 } } },
 ];
 
 export interface SpawnOrder {

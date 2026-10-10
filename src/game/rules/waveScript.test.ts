@@ -21,7 +21,7 @@ describe('WaveDirector', () => {
     expect(orders).toContainEqual({ archetype: 'swarmer', count: 3, elite: false });
   });
 
-  it('spawns one Elite per minute before the Boss', () => {
+  it('spawns an Elite every Wave Script step before the Boss', () => {
     const orders = runFor(new WaveDirector(seeded(1)), BOSS_AT_MS - 1);
     expect(orders.filter((o) => o.elite)).toHaveLength(BOSS_AT_MS / ELITE_EVERY_MS - 1);
   });
