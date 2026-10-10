@@ -2,6 +2,10 @@
 
 A bullet-heaven game built with Phaser 4. Every Theme plays the same game and only changes what it looks and sounds like. Start with [CONTEXT.md](CONTEXT.md) for the vocabulary, [docs/design/game-rules.md](docs/design/game-rules.md) for the rules and [docs/design/themes.md](docs/design/themes.md) for the Themes.
 
+![A late Run in Dead Man's Gulch: level 19, 2458 kills, with outlaws closing in on the player](docs/images/gulch-run.webp)
+
+![The Yakuza Boss fight in Kabukicho: level 25, 3368 kills, with the street packed with enemies](docs/images/kabukicho-boss.webp)
+
 ## Running
 
 ```bash
